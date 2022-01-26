@@ -1,44 +1,10 @@
-import 'package:esolutions/create_account_page.dart';
-import 'package:esolutions/home_page.dart';
+import 'package:esolutions/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'eMagine Solutions',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const LoginPage(),
-    );
-  }
-}
-
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
-
+class CreateAccountPage extends StatefulWidget {
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
   // how it looks.
@@ -49,10 +15,10 @@ class LoginPage extends StatefulWidget {
   // always marked "final".
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<CreateAccountPage> createState() => _CreateAccountPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _CreateAccountPageState extends State<CreateAccountPage> {
   String email = "";
   String password = '';
 
@@ -134,72 +100,58 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
               ),
+              const Text(
+                'Confirm Password :',
+              ),
+              Container(
+                margin: const EdgeInsets.all(15),
+                child: TextField(
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 're-enter your password',
+                  ),
+                  onChanged: (text) {
+                    setState(() {
+                      password = text;
+                      //you can access nameController in its scope to get
+                      // the value of text entered as shown below
+                      //fullName = nameController.text;
+                    });
+                  },
+                ),
+              ),
               Container(
                 margin: const EdgeInsets.all(25),
                 padding: const EdgeInsets.only(top: 20, bottom: 20, left: 50, right: 50),
                 color: Colors.blue,
                 child: InkWell(
                   child: const Text(
-                    'Login',
-                  ),
-                  onTap: () async {
-                    await Firebase.initializeApp();
-                    try {
-                      UserCredential userCredential = await FirebaseAuth.instance
-                          .signInWithEmailAndPassword(email: email, password: password)
-                          .whenComplete(() {
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
-                      });
-                    } on FirebaseAuthException catch (e) {
-                      if (e.code == 'user-not-found') {
-                        print('No user found for that email.');
-                      } else if (e.code == 'wrong-password') {
-                        print('Wrong password provided for that user.');
-                      }
-                    }
-                  },
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.all(25),
-                padding: const EdgeInsets.only(top: 20, bottom: 20, left: 50, right: 50),
-                color: Colors.green,
-                child: InkWell(
-                  child: const Text(
                     'Create account',
                   ),
-                  onTap: () {
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => CreateAccountPage()));
+                  onTap: () async {
+                    await Firebase.initializeApp().whenComplete(() async {
+                      print("completed");
+                      setState(() {});
+                      try {
+                        UserCredential userCredential = await FirebaseAuth.instance
+                            .createUserWithEmailAndPassword(email: email, password: password)
+                            .whenComplete(() {
+                          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => LoginPage()));
+                        });
+                      } on FirebaseAuthException catch (e) {
+                        if (e.code == 'weak-password') {
+                          print('The password provided is too weak.');
+                        } else if (e.code == 'email-already-in-use') {
+                          print('The account already exists for that email.');
+                        }
+                      } catch (e) {
+                        print(e);
+                      }
+                    });
                   },
                 ),
               ),
-              Container(
-                margin: const EdgeInsets.all(25),
-                padding: const EdgeInsets.only(top: 20, bottom: 20, left: 50, right: 50),
-                color: Colors.yellow,
-                child: InkWell(
-                  child: const Text(
-                    'Sign-up with GOOGLE account',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                  onTap: () async {
-                      // Trigger the authentication flow
-                      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-
-                      // Obtain the auth details from the request
-                      final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
-
-                      // Create a new credential
-                      final credential = GoogleAuthProvider.credential(
-                        accessToken: googleAuth?.accessToken,
-                        idToken: googleAuth?.idToken,
-                      );
-
-                      // Once signed in, return the UserCredential
-                      await FirebaseAuth.instance.signInWithCredential(credential);
-                  },
-                ),
-              )
             ],
           ),
         ),
