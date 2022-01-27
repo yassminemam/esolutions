@@ -5,9 +5,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp().whenComplete(() => print("Done"));
+  } on Exception catch (e) {
+    print(e.toString());
+  }
   runApp(MyApp());
 }
 
@@ -143,19 +148,14 @@ class _LoginPageState extends State<LoginPage> {
                     'Login',
                   ),
                   onTap: () async {
-                    await Firebase.initializeApp();
                     try {
                       UserCredential userCredential = await FirebaseAuth.instance
                           .signInWithEmailAndPassword(email: email, password: password)
                           .whenComplete(() {
                         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
                       });
-                    } on FirebaseAuthException catch (e) {
-                      if (e.code == 'user-not-found') {
-                        print('No user found for that email.');
-                      } else if (e.code == 'wrong-password') {
-                        print('Wrong password provided for that user.');
-                      }
+                    } on Exception catch (e) {
+                      print(e.toString());
                     }
                   },
                 ),
@@ -183,20 +183,20 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(color: Colors.black),
                   ),
                   onTap: () async {
-                      // Trigger the authentication flow
-                      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+                    // Trigger the authentication flow
+                    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
-                      // Obtain the auth details from the request
-                      final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
+                    // Obtain the auth details from the request
+                    final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
 
-                      // Create a new credential
-                      final credential = GoogleAuthProvider.credential(
-                        accessToken: googleAuth?.accessToken,
-                        idToken: googleAuth?.idToken,
-                      );
+                    // Create a new credential
+                    final credential = GoogleAuthProvider.credential(
+                      accessToken: googleAuth?.accessToken,
+                      idToken: googleAuth?.idToken,
+                    );
 
-                      // Once signed in, return the UserCredential
-                      await FirebaseAuth.instance.signInWithCredential(credential);
+                    // Once signed in, return the UserCredential
+                    await FirebaseAuth.instance.signInWithCredential(credential);
                   },
                 ),
               )
